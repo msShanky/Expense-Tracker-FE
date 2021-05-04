@@ -1,5 +1,12 @@
 {
   "files.exclude": {
     "**/.DS_Store": false
-  }
+  },
+  "cSpell.words": [
+    "Chakra",
+    "Narayanan",
+    "Shanky",
+    "hookform",
+    "reduxjs"
+  ]
 }
