@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import userSlice from './slice/user';
+import { userSlice, walletSlice, globalSlice, transactionSlice } from './slice';
 import { createLogger } from 'redux-logger';
 import { useDispatch } from 'react-redux';
 
@@ -11,6 +11,9 @@ const logger = createLogger({
 export const store = configureStore({
 	reducer: {
 		user: userSlice,
+		wallet: walletSlice,
+		global: globalSlice,
+		transaction: transactionSlice,
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });

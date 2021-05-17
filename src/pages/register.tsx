@@ -1,16 +1,20 @@
 import { default as NextLink } from 'next/link';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { Center, Flex, Text, Link, Container, Button } from '@chakra-ui/react';
+import { Center, Flex, Text, Link, Container, Button, Spinner } from '@chakra-ui/react';
 import { FormControl, FormLabel, FormErrorMessage } from '@chakra-ui/react';
 import { UnorderedList, Input, ListItem } from '@chakra-ui/react';
-// import { } from '@chakra-ui/react';
+import { Alert, AlertIcon, AlertDescription, IconButton } from '@chakra-ui/react';
+import { ViewOffIcon, ViewIcon } from '@chakra-ui/icons';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { RegisterFormValues } from '../interfaces';
 import * as yup from 'yup';
 import { GetServerSideProps } from 'next';
 import { fetchUserProfile } from '../utils/FetchUserProfile';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '../store/action/UserAction';
+import { useRouter } from 'next/router';
+import { RootState } from '../store';
 
 const schema = yup.object().shape({
 	firstName: yup
@@ -18,7 +22,14 @@ const schema = yup.object().shape({
 		.required('First Name is required')
 		.min(3, 'First Name should be greater than 3 characters')
 		.max(25, 'First Name should be less than 25 characters'),
-	lastName: yup.string(),
+	lastName: yup
+		.string()
+		.min(3, 'Last name should be greater than 3 characters')
+		.max(20, 'Last Name should be less than 20 characters'),
+	userName: yup
+		.string()
+		.min(3, 'User Name should be between 3 to 12 characters')
+		.max(12, 'User Name should be between 3 to 12 characters'),
 	email: yup.string().email(),
 	password: yup
 		.string()
@@ -26,21 +37,37 @@ const schema = yup.object().shape({
 });
 
 const Register = (): ReactElement => {
+	const dispatch = useDispatch();
+	const router = useRouter();
+	const [showPassword, setShowPassword] = useState(false);
 	const { handleSubmit, register, formState } = useForm<RegisterFormValues>({
+		mode: 'onBlur',
 		resolver: yupResolver(schema),
 	});
-	const { errors } = formState;
+	const { errors, isValid, isDirty } = formState;
+	const userState = useSelector((state: RootState) => state.user, shallowEqual);
 
-	const handleFormSubmit = (data: RegisterFormValues) => {
-		console.log(data, 'Params from the on submit function');
-	};
+	useEffect(() => {
+		router.prefetch('/app/dashboard');
+	}, []);
+
+	const { error: apiError, status } = userState;
 
 	const isFieldHasAnError = (fieldName: string) => {
 		return Object.prototype.hasOwnProperty.call(errors, fieldName);
 	};
 
+	// The function would dispatch registration and the API call would be triggered
+	const handleFormSubmit = async (data: RegisterFormValues) => {
+		const resultAction = await dispatch(registerUser(data));
+		// @ts-ignore
+		if (registerUser.fulfilled.match(resultAction)) {
+			router.push('/app/dashboard');
+		}
+	};
+
 	return (
-		<Layout title="Expense Tracker | Sign Up">
+		<Layout hideHeader title="Expense Tracker | Sign Up">
 			<Center h="90vh" justifyContent="center" flexDirection="column">
 				<Text fontSize="5xl" as="h1">
 					Sign Up
@@ -53,6 +80,17 @@ const Register = (): ReactElement => {
 				</Text>
 				{/* FORM Container */}
 				<Container mt={10} onSubmit={handleSubmit(handleFormSubmit)} as="form">
+					{status === 'failed' && (
+						<Alert mb="4" status="error">
+							<AlertIcon />
+							<AlertDescription>
+								{apiError?.code === 'ER_DUP_ENTRY'
+									? `The Email already has an account, please login`
+									: apiError?.message ?? 'Could not log you in, There seems to be an error'}
+							</AlertDescription>
+							{/* <CloseButton onClick={() => setApiErrorStatus(false)} position="absolute" right="8px" top="8px" /> */}
+						</Alert>
+					)}
 					{/* Name Wrapper */}
 					<Flex>
 						{/* First Name */}
@@ -63,11 +101,17 @@ const Register = (): ReactElement => {
 						</FormControl>
 						{/* Last Name */}
 						<FormControl>
-							<FormLabel htmlFor="lastName">last name</FormLabel>
+							<FormLabel htmlFor="lastName">Last name</FormLabel>
 							<Input placeholder="Last Name" {...register('lastName')} />
 							<FormErrorMessage>{errors.lastName?.message}</FormErrorMessage>
 						</FormControl>
 					</Flex>
+
+					{/* User Name */}
+					<FormControl mt={4}>
+						<FormLabel>User Name</FormLabel>
+						<Input placeholder="johnDoe" {...register('userName')} />
+					</FormControl>
 
 					{/* Email */}
 					<FormControl mt={4} isInvalid={isFieldHasAnError('email')} isRequired>
@@ -79,7 +123,22 @@ const Register = (): ReactElement => {
 					{/* Password */}
 					<FormControl mt={4} isInvalid={isFieldHasAnError('password')} isRequired>
 						<FormLabel htmlFor="password">Password</FormLabel>
-						<Input type="password" placeholder="Password" {...register('password')} />
+						{/* TODO: Add view password functionality */}
+						<Input
+							variant="filled"
+							type={showPassword ? 'text' : 'password'}
+							placeholder="Password"
+							{...register('password')}
+						/>
+						<IconButton
+							position="absolute"
+							background="transparent"
+							right="0"
+							zIndex={5}
+							aria-label="show password"
+							onClick={() => setShowPassword(!showPassword)}
+							icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
+						/>
 						<FormErrorMessage>
 							{errors.password?.message === 'PASSWORD_SUGGESTION' && (
 								<UnorderedList>
@@ -95,7 +154,14 @@ const Register = (): ReactElement => {
 
 					{/* Submit Button */}
 					<Flex mt={16} justifyContent="center">
-						<Button background="blue.600" isLoading={formState.isSubmitting} type="submit" w={'50%'}>
+						<Button
+							background="blue.600"
+							isLoading={status === 'pending'}
+							disabled={!isDirty || !isValid}
+							spinner={<Spinner />}
+							type="submit"
+							w={'50%'}
+						>
 							Submit
 						</Button>
 					</Flex>

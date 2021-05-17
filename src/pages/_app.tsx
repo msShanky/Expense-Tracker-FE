@@ -4,6 +4,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { Provider } from 'react-redux';
 import { store } from '../store';
 import { getCookie } from '../utils/CookieHandler';
+import '../styles/date-picker.css';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 

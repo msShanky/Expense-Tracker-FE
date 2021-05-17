@@ -22,6 +22,7 @@
 		"js-cookie": "^2.2.1",
 		"next": "latest",
 		"react": "^17.0.1",
+		"react-datepicker": "^3.8.0",
 		"react-dom": "^17.0.1",
 		"react-hook-form": "^7.1.0",
 		"react-redux": "^7.2.4",
@@ -32,6 +33,7 @@
 	"devDependencies": {
 		"@types/node": "^14.14.37",
 		"@types/react": "^17.0.3",
+		"@types/react-datepicker": "^3.1.8",
 		"@types/react-dom": "^17.0.3",
 		"@types/yup": "^0.29.11",
 		"@typescript-eslint/eslint-plugin": "^4.22.0",

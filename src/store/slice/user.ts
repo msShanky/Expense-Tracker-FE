@@ -1,18 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loginUserAsyncActions } from '../action/UserFetch';
+import { loginUserAsyncActions, registerUserActions } from '../action/UserAction';
 import initialState from '../initialState';
 
 const userSlice = createSlice({
 	name: 'user',
 	initialState: initialState.user,
-	reducers: {
-		setUser: (state, payload) => {
-			state.profile = payload;
-			state.loginTime = new Date().toDateString();
-		},
-	},
+	reducers: {},
 	extraReducers: (builder) => {
 		loginUserAsyncActions(builder);
+		registerUserActions(builder);
 	},
 });
 
